@@ -1,0 +1,62 @@
+// make sure you run chmod +x runscript.sh
+const express = require('express')
+const bodyParser = require('body-parser')
+const crypto = require('crypto');
+const app = express();
+var request = require('request')
+const GalaxyEndPoint = "https://webhook.site/3c84772c-742a-4f17-b84a-df54f1a8f958"
+
+app.use(
+  "/webhooks/optimizely",
+  bodyParser.text({ type: "*/*" }),
+  (req, res, next) => {
+    console.log("It sha entered first");
+    const WEBHOOK_SECRET = process.env.OPTIMIZELY_WEBHOOK_SECRET || "5C3Co7q-kATJq7CCnD94b2u1imlSH76soIiaNZJ-eHo";
+    const webhook_payload = req.body;
+     // console.log(WEBHOOK_SECRET);
+    console.log(webhook_payload);
+   
+    const postbody = { form: webhook_payload}
+  
+    request.post(GalaxyEndPoint, postbody, function (error, response, body)
+         {
+           if (!error && response.statusCode == 200) {
+             console.log(body) }
+  });
+
+
+    console.log(` [Optimizely] Optimizely webhook request received!  `);
+  res.send(req.body)
+  }
+);
+app.use('/webhooks2/optimizely2', bodyParser.text({ type: '*/*' }), (req, res, next) => {
+
+  const WEBHOOK_SECRET = process.env.OPTIMIZELY_WEBHOOK_SECRET
+  const webhook_payload = req.body
+  const hmac = crypto.createHmac('sha1', WEBHOOK_SECRET)
+  const webhookDigest = hmac.update(webhook_payload).digest('hex')
+
+  const computedSignature = `sha1=${webhookDigest}`
+  const requestSignature = req.header('X-Hub-Signature')
+
+  if (!crypto.timingSafeEqual(Buffer.from(computedSignature, 'utf8'), Buffer.from(requestSignature, 'utf8'))) {
+    console.log(`[Optimizely] Signatures did not match! Do not trust webhook request")`)
+    res.status(500)
+    return
+  }
+
+  console.log(`
+    [Optimizely] Optimizely webhook request received!
+    Signatures match! Webhook verified as coming from Optimizely
+    Download Optimizely datafile and re-instantiate the SDK Client
+    For the latest changes to take affect
+  `);
+  res.send('God is Great good  wan n be ..')
+});
+app.get("/", (req, res) => {
+  res.send('God is Great good  wan n be ..')
+    
+})
+app.listen(5001, () => {
+     console.log('app is running @ 5001')
+ })
